@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: mlops
+      POSTGRES_PASSWORD: mlops
+      POSTGRES_DB: mlopsdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow
+    volumes:
+      - ~/.aws:/root/.aws:ro
+    environment:
+      BACKEND_STORE_URI: postgresql://mlops:mlops@postgres:5432/mlopsdb
+      ARTIFACT_ROOT: s3://ml-codigo-facilito-2025
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://mlops:mlops@postgres:5432/mlopsdb
+      --default-artifact-root s3://ml-codigo-facilito-2025
+      --host 0.0.0.0
+      --port 5000
+    depends_on:
+      - postgres
+    ports:
+      - "5000:5000"
+
+  prefect:
+    image: prefecthq/prefect:2-latest
+    container_name: prefect
+    command: prefect server start
+    ports:
+      - "4200:4200"
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://mlops:mlops@postgres:5432/mlopsdb
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
