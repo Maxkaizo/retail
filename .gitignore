@@ -1,7 +1,8 @@
 # customized
 data/
 lab/
-lab/outputs/
+outputs/
+mlruns/
 
 
 
