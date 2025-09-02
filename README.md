@@ -128,3 +128,57 @@ El despliegue se realizará de manera **local, reproducible y en batch**, lo que
 
 Este enfoque asegura un pipeline **ejecutable de principio a fin** y fácilmente repetible, cumpliendo los requisitos de la rúbrica sin necesidad de desplegar un servicio de inferencia en línea.
 
+## ⚙️ Arquitectura de la Solución
+
+El proyecto se soporta en una **arquitectura local con contenedores**, que permite reproducir experimentos de manera confiable y almacenar resultados en la nube:
+
+![alt text](image.png)
+
+- **MLflow**: servidor de tracking y registry, configurado para guardar artefactos y modelos en un bucket de **Amazon S3**.  
+- **Prefect 2.0**: servidor de orquestación para gestionar la ejecución de flujos de entrenamiento y validación.  
+- **Postgres**: base de datos para almacenar metadatos de MLflow y Prefect.  
+- **Docker Compose**: define los servicios y redes internas, asegurando que todos los componentes se levanten de forma consistente.  
+- **S3 bucket (`ml-codigo-facilito-2025`)**: almacena de manera centralizada los modelos y artefactos generados en cada run.  
+
+Con esta configuración:  
+- Los experimentos se lanzan desde el entorno local (conda env `forecasting`).  
+- MLflow recibe métricas, parámetros y artefactos.  
+- Prefect registra y monitorea la ejecución de los flujos.  
+- Los modelos quedan versionados y disponibles para ser promovidos en el registry.  
+
+La infraestructura ya está **funcional y accesible vía UI** tanto para MLflow (`http://localhost:5000`) como para Prefect (`http://localhost:4200`).  
+
+---
+
+## 🧪 Estrategia de Entrenamiento
+
+Se desarrolló una **libreta de entrenamiento inicial**, conectada al pipeline de tracking, que implementa la siguiente estrategia:
+
+1. **Carga y filtrado de datos**  
+   - Se utiliza el archivo enriquecido `sales_train_enriched.csv`.  
+   - Para acelerar el desarrollo, se filtran únicamente registros del año **2023**.  
+   - Se respeta la naturaleza temporal de los datos: los splits se hacen **cronológicamente** (80% entrenamiento, 20% validación), evitando fuga de información del futuro.  
+
+2. **Selección de features y target**  
+   - Target inicial: `sales_log`.  
+   - Features seleccionadas: transformaciones logarítmicas (`orders_log`, `price_log`) y variables derivadas como `max_discount`.  
+   - Esto asegura estabilidad en la distribución y reduce el sesgo en las métricas.  
+
+3. **Modelos considerados**  
+   - **Baseline** con RandomForest, usando hiperparámetros básicos.  
+   - **LightGBM, XGBoost y CatBoost**, optimizados con **Hyperopt** sobre un espacio de hiperparámetros reducido (10–20 evaluaciones por modelo).  
+
+4. **Registro en MLflow**  
+   - Cada run se registra con parámetros, métricas (RMSE) y artefactos (modelo serializado).  
+   - Los modelos quedan almacenados en S3 y versionados en el registry de MLflow, listos para ser comparados o promovidos.  
+
+---
+
+## ✅ Estado Actual
+
+- La infraestructura (MLflow + Prefect + Postgres + S3) está **levantada y validada**.  
+- Se han corrido los primeros experimentos de prueba exitosamente, confirmando el flujo de tracking y almacenamiento en la nube.  
+- La libreta de entrenamiento ya permite entrenar modelos base y optimizados, dejando listos los componentes para la siguiente etapa:  
+  - Definir la lista final de features relevantes.  
+  - Completar la comparativa de modelos.  
+  - Documentar los resultados en el README y realizar un primer *submit* del proyecto.  
