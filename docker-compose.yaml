@@ -7,9 +7,10 @@ services:
     environment:
       POSTGRES_USER: mlops
       POSTGRES_PASSWORD: mlops
-      POSTGRES_DB: mlopsdb
+      POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
 
@@ -21,11 +22,11 @@ services:
     volumes:
       - ~/.aws:/root/.aws:ro
     environment:
-      BACKEND_STORE_URI: postgresql://mlops:mlops@postgres:5432/mlopsdb
+      BACKEND_STORE_URI: postgresql://mlops:mlops@postgres:5432/mlflowdb
       ARTIFACT_ROOT: s3://ml-codigo-facilito-2025
     command: >
       mlflow server
-      --backend-store-uri postgresql://mlops:mlops@postgres:5432/mlopsdb
+      --backend-store-uri postgresql://mlops:mlops@postgres:5432/mlflowdb
       --default-artifact-root s3://ml-codigo-facilito-2025
       --host 0.0.0.0
       --port 5000
@@ -37,11 +38,11 @@ services:
   prefect:
     image: prefecthq/prefect:2-latest
     container_name: prefect
-    command: prefect server start
+    command: prefect server start --host 0.0.0.0 --port 4200 --ui
     ports:
       - "4200:4200"
     environment:
-      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://mlops:mlops@postgres:5432/mlopsdb
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://mlops:mlops@postgres:5432/prefectdb
     depends_on:
       - postgres
 
