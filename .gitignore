@@ -3,6 +3,9 @@ data/
 lab/
 outputs/
 mlruns/
+outputs*
+catboost_info
+
 
 
 
