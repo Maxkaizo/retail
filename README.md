@@ -182,3 +182,19 @@ Se desarrolló una **libreta de entrenamiento inicial**, conectada al pipeline d
   - Definir la lista final de features relevantes.  
   - Completar la comparativa de modelos.  
   - Documentar los resultados en el README y realizar un primer *submit* del proyecto.  
+
+
+### Screenshots de algunos puntos avanzados
+
+
+mlflow funcionando
+![alt text](images/ss1.png)
+
+prefect funcionando
+![alt text](images/ss2.png)
+
+Contenedores funcionando
+![alt text](images/ss3.png)
+
+
+
